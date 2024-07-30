@@ -1,6 +1,7 @@
 from .abstract_pce import AbstractPCE
 from math import factorial as fact
 import torch
+from .config import *
 
 class PCE(AbstractPCE):
     def __init__(self, distributions, p):

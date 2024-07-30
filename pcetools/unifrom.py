@@ -1,6 +1,7 @@
 from scipy.special import legendre
 from .distribution import Distribution
 import torch
+from . import config
 
 class Uniform(Distribution):
     def __init__(self, a, b):
@@ -13,7 +14,7 @@ class Uniform(Distribution):
         self.b = b
 
     def polynom_coeffs(self, degree):
-        return torch.tensor(legendre(degree).coeffs, dtype=torch.float32)
+        return torch.tensor(legendre(degree).coeffs, dtype=config.dtype)
     
     @property
     def linear_transform_coeffs(self):

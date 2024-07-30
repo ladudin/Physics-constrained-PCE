@@ -1,6 +1,7 @@
 from scipy.special import hermite
 from .distribution import Distribution
 import torch
+from . import config
 
 class Normal(Distribution):
     def __init__(self, mean, std_dev):
@@ -13,7 +14,7 @@ class Normal(Distribution):
         self.std_dev = std_dev
 
     def polynom_coeffs(self, degree):
-        return torch.tensor(hermite(degree).coeffs, dtype=torch.float32)
+        return torch.tensor(hermite(degree).coeffs, dtype=config.dtype)
     
     @property
     def linear_transform_coeffs(self):
