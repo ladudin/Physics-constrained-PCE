@@ -1,5 +1,7 @@
-from scipy.special import eval_legendre
+from scipy.special import legendre
 from .distribution import Distribution
+import torch
+from . import config
 
 class Uniform(Distribution):
     def __init__(self, a, b):
@@ -11,12 +13,9 @@ class Uniform(Distribution):
         self.a = a
         self.b = b
 
-    def polynom(self, x, degree):
-        """
-        Вычисление значения полинома Лежандра степени `degree` в точке `x`.
-        :param x: Точка, в которой вычисляется полином.
-        :param degree: Степень полинома.
-        :return: Значение полинома в точке `x`.
-        """
-        normalized_x = 2 * (x - self.a) / (self.b - self.a) - 1
-        return eval_legendre(degree, normalized_x)
+    def polynom_coeffs(self, degree):
+        return torch.tensor(legendre(degree).coeffs, dtype=config.dtype)
+    
+    @property
+    def linear_transform_coeffs(self):
+        return (2 / (self.b - self.a), -(self.b + self.a) / (self.b - self.a))

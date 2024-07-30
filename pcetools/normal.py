@@ -1,5 +1,7 @@
-from scipy.special import eval_hermite
+from scipy.special import hermite
 from .distribution import Distribution
+import torch
+from . import config
 
 class Normal(Distribution):
     def __init__(self, mean, std_dev):
@@ -11,12 +13,9 @@ class Normal(Distribution):
         self.mean = mean
         self.std_dev = std_dev
 
-    def polynom(self, x, degree):
-        """
-        Вычисление значения полинома Хермита степени `degree` в точке `x`.
-        :param x: Точка, в которой вычисляется полином.
-        :param degree: Степень полинома.
-        :return: Значение полинома в точке `x`.
-        """
-        normalized_x = (x - self.mean) / self.std_dev
-        return eval_hermite(degree, normalized_x)
+    def polynom_coeffs(self, degree):
+        return torch.tensor(hermite(degree).coeffs, dtype=config.dtype)
+    
+    @property
+    def linear_transform_coeffs(self):
+        return (1 / self.std_dev, -self.mean / self.std_dev)
