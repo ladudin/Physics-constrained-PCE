@@ -9,10 +9,15 @@ class Distribution(ABC):
         pass
 
     @abstractmethod
-    def polynom(self, x, degree):
+    def polynom_coeffs(self, degree):
         """
-        Вычисление значения ортогонального полинома степени degree в точке x
+        Коэффициенты ортогонального полинома степени degree 
         При необходимости значение x нормализуется в зависимости от параметров
         распределения.
         """
+        pass
+    
+    @property
+    @abstractmethod
+    def linear_transform_coeffs(self):
         pass
