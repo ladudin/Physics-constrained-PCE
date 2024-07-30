@@ -28,18 +28,23 @@ class AbstractPCE(ABC):
         polynom_coeffs = self.polynom_coeffs(var, degree)
         assert len(polynom_coeffs) == degree + 1
 
-        p_features = torch.ones(x.size(0), degree + 1)
-        for j in range(degree):
-            p_features[:, j] = self.transform(var, x) ** (degree - j)
+        p_features = torch.stack(
+            [
+                self.transform(var, x) ** (degree - j) 
+             for j in range(degree+1)
+             ], dim=1)
 
         return p_features @ polynom_coeffs
     
     def __call__(self, X):
         s = 0
         for pce_coeff, degrees in self.degrees_sets:
-            for var_num in range(self.vars):
-                X[:, var_num] = self.polynom(var_num, degrees[var_num], X[:, var_num])
-            s += X.prod(dim=-1) * pce_coeff
+            phi = torch.stack(
+                [
+                    self.polynom(var_num, degrees[var_num], X[:, var_num]) 
+                    for var_num in range(self.vars)
+                ], dim=1)
+            s += phi.prod(dim=-1) * pce_coeff
         return s
     
     def derivative(self, var):
