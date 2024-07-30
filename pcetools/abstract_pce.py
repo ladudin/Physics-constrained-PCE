@@ -2,10 +2,12 @@ from abc import ABC, abstractmethod
 import torch
 
 class AbstractPCE(ABC):
+    @property
     @abstractmethod
     def vars(self):
         pass
 
+    @property
     @abstractmethod
     def degrees_sets(self):
         pass
