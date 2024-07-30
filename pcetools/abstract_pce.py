@@ -51,11 +51,13 @@ class Derivative(AbstractPCE):
         self.pce = pce
         self.dvar = dvar
 
+    @property
     def vars(self):
-        return self.pce.vars()
+        return self.pce.vars
 
+    @property
     def degrees_sets(self):
-        for pce_coeff, degrees in self.pce.degrees_sets():
+        for pce_coeff, degrees in self.pce.degrees_sets:
             if degrees[self.dvar]:
                 degrees = list(degrees)
                 degrees[self.dvar] -= 1
