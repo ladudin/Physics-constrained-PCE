@@ -1,4 +1,5 @@
 from scipy.special import legendre
+from scipy.stats import uniform
 from .distribution import Distribution
 import torch
 from . import config
@@ -19,3 +20,6 @@ class Uniform(Distribution):
     @property
     def linear_transform_coeffs(self):
         return (2 / (self.b - self.a), -(self.b + self.a) / (self.b - self.a))
+    
+    def ppf(self, x):
+        return uniform.ppf(x, loc=self.a, scale=self.b-self.a)

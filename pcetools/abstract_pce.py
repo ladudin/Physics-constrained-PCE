@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import torch
+from . import config
 
 class AbstractPCE(ABC):
     def __init__(self, vars):
@@ -42,6 +43,9 @@ class AbstractPCE(ABC):
         return value
     
     def __call__(self, X):
+        assert X.dtype == config.dtype, (
+            f"Входные данные должны иметь тип {config.dtype}"
+        )
         s = 0
         for pce_coeff, degrees in self.components:
             if pce_coeff == 0.0:

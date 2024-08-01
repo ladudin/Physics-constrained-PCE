@@ -3,6 +3,7 @@ import torch
 from . import config
 from typing import overload, Iterable, Union, Optional
 from .distribution import Distribution
+from scipy.stats import qmc
 
 class PCE(AbstractPCE):
     @overload
@@ -69,3 +70,10 @@ class PCE(AbstractPCE):
     
     def linear_transform_coeffs(self, var):
         return self.distributions[var].linear_transform_coeffs
+    
+    def sample(self, n):
+        sampler = qmc.LatinHypercube(self.vars)
+        p_samples = sampler.random(n)
+        for var in range(self.vars):
+            p_samples[:, var] = self.distributions[var].ppf(p_samples[:, var])
+        return torch.tensor(p_samples, dtype=config.dtype)

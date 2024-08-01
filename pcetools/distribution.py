@@ -21,3 +21,7 @@ class Distribution(ABC):
     @abstractmethod
     def linear_transform_coeffs(self):
         pass
+
+    @abstractmethod
+    def ppf(self, x):
+        pass

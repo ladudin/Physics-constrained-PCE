@@ -1,4 +1,5 @@
 from scipy.special import hermite
+from scipy.stats import norm
 from .distribution import Distribution
 import torch
 from . import config
@@ -19,3 +20,6 @@ class Normal(Distribution):
     @property
     def linear_transform_coeffs(self):
         return (1 / self.std_dev, -self.mean / self.std_dev)
+    
+    def ppf(self, x):
+        return norm.ppf(x, loc=self.mean, scale=self.std_dev)
