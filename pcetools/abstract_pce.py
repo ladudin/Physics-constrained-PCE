@@ -2,14 +2,13 @@ from abc import ABC, abstractmethod
 import torch
 
 class AbstractPCE(ABC):
-    @property
-    @abstractmethod
-    def vars(self):
-        pass
+    def __init__(self, vars):
+        self.vars = vars
+        self.cache = dict()
 
     @property
     @abstractmethod
-    def degrees_sets(self):
+    def components(self):
         pass
 
     @abstractmethod
@@ -18,13 +17,17 @@ class AbstractPCE(ABC):
 
     @abstractmethod
     def linear_transform_coeffs(self, var):
-        return torch.ones(2)
+        pass
 
     def transform(self, var, x):
         a, b = self.linear_transform_coeffs(var)
         return x * a + b
 
     def polynom(self, var, degree, x):
+        value = self.cache.get((var, degree), None)
+        if value is not None:
+            return value
+
         polynom_coeffs = self.polynom_coeffs(var, degree)
         assert len(polynom_coeffs) == degree + 1
 
@@ -34,17 +37,22 @@ class AbstractPCE(ABC):
              for j in range(degree+1)
              ], dim=1)
 
-        return p_features @ polynom_coeffs
+        value = p_features @ polynom_coeffs
+        self.cache[(var, degree)] = value
+        return value
     
     def __call__(self, X):
         s = 0
-        for pce_coeff, degrees in self.degrees_sets:
+        for pce_coeff, degrees in self.components:
+            if pce_coeff == 0.0:
+                continue
             phi = torch.stack(
                 [
                     self.polynom(var_num, degrees[var_num], X[:, var_num]) 
                     for var_num in range(self.vars)
                 ], dim=1)
             s += phi.prod(dim=-1) * pce_coeff
+        self.cache.clear()
         return s
     
     def derivative(self, var):
@@ -53,21 +61,19 @@ class AbstractPCE(ABC):
 
 class Derivative(AbstractPCE):
     def __init__(self, pce, dvar):
+        super().__init__(pce.vars)
         self.pce = pce
         self.dvar = dvar
 
     @property
-    def vars(self):
-        return self.pce.vars
-
-    @property
-    def degrees_sets(self):
-        for pce_coeff, degrees in self.pce.degrees_sets:
+    def components(self):
+        for pce_coeff, degrees in self.pce.components:
             if degrees[self.dvar]:
                 degrees = list(degrees)
                 degrees[self.dvar] -= 1
                 yield pce_coeff, degrees
-            yield 0.0, degrees
+            else:
+                yield 0.0, degrees
     
     def polynom_coeffs(self, var, degree):
         if var != self.dvar:

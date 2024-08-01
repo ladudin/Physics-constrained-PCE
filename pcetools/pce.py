@@ -1,29 +1,48 @@
 from .abstract_pce import AbstractPCE
-from math import factorial as fact
 import torch
-from .config import *
+from . import config
+from typing import overload, Iterable, Union, Optional
+from .distribution import Distribution
 
 class PCE(AbstractPCE):
-    def __init__(self, distributions, p):
-        self.distributions = distributions
-        self.p = p
-        self.P = fact(self.vars + self.p) // (fact(self.vars) * fact(self.p))
-        self.pce_coeffs = torch.rand(self.P) * 2 - 1
+    @overload
+    def __init__(self, 
+                 distributions: Iterable[Distribution], 
+                 p: int, 
+                 pce_coeffs: Optional[torch.FloatTensor]=None, 
+                 names: Optional[Iterable[str]]=None
+                 ) -> None:
+        ...
 
-    @property
-    def vars(self):
-        return len(self.distributions)
-    
-    @property
-    def degrees_sets(self):
-        return zip(self.pce_coeffs, self.generate_degrees(self.vars, self.p))
-    
-    def polynom_coeffs(self, var, degree):
-        return self.distributions[var].polynom_coeffs(degree)
-    
-    def linear_transform_coeffs(self, var):
-        return self.distributions[var].linear_transform_coeffs
-    
+    @overload
+    def __init__(self, 
+                 distributions: Iterable[Distribution], 
+                 degrees_sets: Iterable[Iterable[int]], 
+                 pce_coeffs: Optional[torch.FloatTensor]=None, 
+                 names: Optional[Iterable[str]]=None
+                 ) -> None:
+        ...
+
+    def __init__(self, 
+                distributions: Iterable[Distribution], 
+                p: Union[int, Iterable[Iterable[int]]], 
+                pce_coeffs: Optional[torch.FloatTensor]=None, 
+                names: Optional[Iterable[str]]=None
+                ) -> None:
+        super().__init__(len(distributions))
+        self.distributions = distributions
+        self.names = names if names is not None else []
+
+        if isinstance(p, int):
+            self.degrees_sets = list(self.generate_degrees(self.vars, p)) 
+        else:
+            self.degrees_sets = p
+
+        if pce_coeffs is not None:
+            self.pce_coeffs = pce_coeffs
+        else:
+            self.pce_coeffs = torch.rand(len(self.degrees_sets)) * 2 - 1
+
     @staticmethod
     def generate_degrees(m, p):
         def degrees_with_sum(m, s):
@@ -40,3 +59,13 @@ class PCE(AbstractPCE):
         for s in range(p, -1, -1):
             yield from degrees_with_sum(m, s)
         return
+
+    @property
+    def components(self):
+        return zip(self.pce_coeffs, self.degrees_sets)
+    
+    def polynom_coeffs(self, var, degree):
+        return self.distributions[var].polynom_coeffs(degree)
+    
+    def linear_transform_coeffs(self, var):
+        return self.distributions[var].linear_transform_coeffs
