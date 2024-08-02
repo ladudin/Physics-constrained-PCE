@@ -42,7 +42,7 @@ class PCE(AbstractPCE):
         if pce_coeffs is not None:
             self.pce_coeffs = pce_coeffs
         else:
-            self.pce_coeffs = torch.rand(len(self.degrees_sets)) * 2 - 1
+            self.pce_coeffs = torch.zeros(len(self.degrees_sets))
 
     @staticmethod
     def generate_degrees(m, p):
