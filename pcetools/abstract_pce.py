@@ -42,14 +42,39 @@ class AbstractPCE(ABC):
         self.cache[(var, degree)] = value
         return value
     
-    def __call__(self, X):
+    def _handle_args(self, args):
+        # либо один тензор со всеми данными, либо vars векторов
+        assert len(args) == 1 or len(args) == self.vars
+
+        if len(args) == 1:
+            assert args[0].dim() == 2 and args[0].size(-1) == self.vars
+            return args[0]
+
+        sizes = set()
+        for i, arg in enumerate(args):
+            args[i] = torch.as_tensor(arg, dtype=config.dtype).reshape(-1)
+            sizes.add(args[i].size(-1))
+
+        assert len(sizes) <= 2
+        if len(sizes) == 1:
+            return torch.stack(args, dim=-1)
+        
+        n = max(sizes)
+        for i, arg in enumerate(args):
+            if arg.size(-1) == 1:
+                args[i] = args[i] * torch.ones(n, dtype=config.dtype)
+
+        return torch.stack(args, dim=-1)
+        
+    
+    def __call__(self, *args):
+        X = self._handle_args(list(args))
+
         assert X.dtype == config.dtype, (
             f"Входные данные должны иметь тип {config.dtype}"
         )
         s = 0
         for pce_coeff, degrees in self.components:
-            if pce_coeff == 0.0:
-                continue
             phi = torch.stack(
                 [
                     self.polynom(var_num, degrees[var_num], X[:, var_num]) 
